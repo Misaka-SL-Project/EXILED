@@ -26,10 +26,5 @@ namespace Exiled.API.Enums
         /// Uncuffed due to the cuffer no longer alive.
         /// </summary>
         CufferDied,
-
-        /// <summary>
-        /// Uncuffed by admin or plugin.
-        /// </summary>
-        CustomUncuff,
     }
 }
