@@ -27,10 +27,11 @@ namespace Exiled.Events.Patches.Events.Player
 
     /// <summary>
     /// Patches <see cref="DisarmingHandlers.ServerProcessDisarmMessage" />.
-    /// Adds the <see cref="Handlers.Player.Handcuffing" /> and <see cref="Handlers.Player.RemovingHandcuffs" /> events.
+    /// Adds the <see cref="Handlers.Player.Handcuffing" />, <see cref="Handlers.Player.RemovingHandcuffs" />, and <see cref="Handlers.Player.RemovedHandcuffs" /> events.
     /// </summary>
     [EventPatch(typeof(Handlers.Player), nameof(Handlers.Player.Handcuffing))]
     [EventPatch(typeof(Handlers.Player), nameof(Handlers.Player.RemovingHandcuffs))]
+    [EventPatch(typeof(Handlers.Player), nameof(Handlers.Player.RemovedHandcuffs))]
     [HarmonyPatch(typeof(DisarmingHandlers), nameof(DisarmingHandlers.ServerProcessDisarmMessage))]
     internal static class ProcessDisarmMessage
     {
@@ -47,6 +48,7 @@ namespace Exiled.Events.Patches.Events.Player
                 index,
                 new[]
                 {
+                    // Invoking RemovingHandcuffs event
                     // Player.Get(referenceHub)
                     new CodeInstruction(OpCodes.Ldloc_0),
                     new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
@@ -73,6 +75,25 @@ namespace Exiled.Events.Patches.Events.Player
                     //    return;
                     new(OpCodes.Callvirt, PropertyGetter(typeof(RemovingHandcuffsEventArgs), nameof(RemovingHandcuffsEventArgs.IsAllowed))),
                     new(OpCodes.Brfalse_S, returnLabel),
+
+                    // Invoking RemovedHandcuffs event
+                    // Player.Get(referenceHub)
+                    new(OpCodes.Ldloc_0),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // Player.Get(msg.PlayerToDisarm)
+                    new(OpCodes.Ldarg_1),
+                    new(OpCodes.Ldfld, Field(typeof(DisarmMessage), nameof(DisarmMessage.PlayerToDisarm))),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // UncuffReason.Player
+                    new(OpCodes.Ldc_I4_0),
+
+                    // RemovedHandcuffsEventArgs ev = new(Player, Player, UncuffReason.Player)
+                    new(OpCodes.Newobj, GetDeclaredConstructors(typeof(RemovedHandcuffsEventArgs))[0]),
+
+                    // Handlers.Player.OnRemovedHandcuffs(ev)
+                    new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnRemovedHandcuffs))),
                 });
 
             offset = -3;
@@ -83,6 +104,7 @@ namespace Exiled.Events.Patches.Events.Player
                 index,
                 new[]
                 {
+                    // Invoking Handcuffing event
                     // Player.Get(referenceHub)
                     new CodeInstruction(OpCodes.Ldloc_0).MoveLabelsFrom(newInstructions[index]),
                     new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
@@ -119,9 +141,10 @@ namespace Exiled.Events.Patches.Events.Player
 
     /// <summary>
     /// Patches <see cref="DisarmedPlayers.ValidateEntry(DisarmedPlayers.DisarmedEntry)" />.
-    /// Invokes <see cref="Handlers.Player.RemovingHandcuffs" /> event.
+    /// Invokes <see cref="Handlers.Player.RemovingHandcuffs" /> and <see cref="Handlers.Player.RemovedHandcuffs" /> event.
     /// </summary>
     [EventPatch(typeof(Handlers.Player), nameof(Handlers.Player.RemovingHandcuffs))]
+    [EventPatch(typeof(Handlers.Player), nameof(Handlers.Player.RemovedHandcuffs))]
     [HarmonyPatch(typeof(DisarmedPlayers), nameof(DisarmedPlayers.ValidateEntry))]
     internal static class Uncuff
     {
@@ -138,6 +161,7 @@ namespace Exiled.Events.Patches.Events.Player
                 index,
                 new[]
                 {
+                    // Invoking RemovingHandcuffs event
                     // Player.Get(Cuffer)
                     new CodeInstruction(OpCodes.Ldloc_1),
                     new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
@@ -154,15 +178,36 @@ namespace Exiled.Events.Patches.Events.Player
 
                     // RemovingHandcuffsEventArgs ev = new(Cuffer, Target, UncuffReason.CufferDied, true)
                     new(OpCodes.Newobj, GetDeclaredConstructors(typeof(RemovingHandcuffsEventArgs))[0]),
-                    new(OpCodes.Dup),
+
+                    // TODO: Uncomment this part in next major update to prevent breaking changes
+                    // new(OpCodes.Dup),
 
                     // Handlers.Player.OnRemovingHandcuffs(ev)
                     new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnRemovingHandcuffs))),
 
+                    // TODO: Uncomment this part in next major update to prevent breaking changes
                     // if (!ev.IsAllowed)
                     //    return true;
-                    new(OpCodes.Callvirt, PropertyGetter(typeof(RemovingHandcuffsEventArgs), nameof(RemovingHandcuffsEventArgs.IsAllowed))),
-                    new(OpCodes.Brfalse_S, returnLabel),
+                    // new(OpCodes.Callvirt, PropertyGetter(typeof(RemovingHandcuffsEventArgs), nameof(RemovingHandcuffsEventArgs.IsAllowed))),
+                    // new(OpCodes.Brfalse_S, returnLabel),
+
+                    // Invoking RemovedHandcuffs event
+                    // Player.Get(Cuffer)
+                    new CodeInstruction(OpCodes.Ldloc_1),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // Player.Get(Target)
+                    new(OpCodes.Ldloc_0),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // UncuffReason.CufferDied
+                    new(OpCodes.Ldc_I4_2),
+
+                    // RemovedHandcuffsEventArgs ev = new(Cuffer, Target, UncuffReason.CufferDied)
+                    new(OpCodes.Newobj, GetDeclaredConstructors(typeof(RemovedHandcuffsEventArgs))[0]),
+
+                    // Handlers.Player.OnRemovedHandcuffs(ev)
+                    new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnRemovedHandcuffs))),
                 });
 
             offset = 5;
@@ -173,6 +218,7 @@ namespace Exiled.Events.Patches.Events.Player
                 index,
                 new[]
                 {
+                    // Invoking RemovingHandcuffs event
                     // Player.Get(Cuffer)
                     new CodeInstruction(OpCodes.Ldloc_1),
                     new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
@@ -189,15 +235,36 @@ namespace Exiled.Events.Patches.Events.Player
 
                     // RemovingHandcuffsEventArgs ev = new(Cuffer, Target, UncuffReason.CufferDied, true)
                     new(OpCodes.Newobj, GetDeclaredConstructors(typeof(RemovingHandcuffsEventArgs))[0]),
-                    new(OpCodes.Dup),
+
+                    // TODO: Uncomment this part in next major update to prevent breaking changes
+                    // new(OpCodes.Dup),
 
                     // Handlers.Player.OnRemovingHandcuffs(ev)
                     new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnRemovingHandcuffs))),
 
+                    // TODO: Uncomment this part in next major update to prevent breaking changes
                     // if (!ev.IsAllowed)
                     //    return true;
-                    new(OpCodes.Callvirt, PropertyGetter(typeof(RemovingHandcuffsEventArgs), nameof(RemovingHandcuffsEventArgs.IsAllowed))),
-                    new(OpCodes.Brfalse_S, returnLabel),
+                    // new(OpCodes.Callvirt, PropertyGetter(typeof(RemovingHandcuffsEventArgs), nameof(RemovingHandcuffsEventArgs.IsAllowed))),
+                    // new(OpCodes.Brfalse_S, returnLabel),
+
+                    // Invoking RemovedHandcuffs event
+                    // Player.Get(Cuffer)
+                    new CodeInstruction(OpCodes.Ldloc_1),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // Player.Get(Target)
+                    new(OpCodes.Ldloc_0),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // UncuffReason.CufferDied
+                    new(OpCodes.Ldc_I4_2),
+
+                    // RemovedHandcuffsEventArgs ev = new(Cuffer, Target, UncuffReason.CufferDied)
+                    new(OpCodes.Newobj, GetDeclaredConstructors(typeof(RemovedHandcuffsEventArgs))[0]),
+
+                    // Handlers.Player.OnRemovedHandcuffs(ev)
+                    new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnRemovedHandcuffs))),
                 });
 
             offset = 3;
@@ -208,6 +275,7 @@ namespace Exiled.Events.Patches.Events.Player
                 index,
                 new[]
                 {
+                    // Invoking RemovingHandcuffs event
                     // Player.Get(Cuffer)
                     new CodeInstruction(OpCodes.Ldloc_1),
                     new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
@@ -224,15 +292,36 @@ namespace Exiled.Events.Patches.Events.Player
 
                     // RemovingHandcuffsEventArgs ev = new(Cuffer, Target, UncuffReason.OutOfRange, true)
                     new(OpCodes.Newobj, GetDeclaredConstructors(typeof(RemovingHandcuffsEventArgs))[0]),
-                    new(OpCodes.Dup),
+
+                    // TODO: Uncomment this part in next major update to prevent breaking changes
+                    // new(OpCodes.Dup),
 
                     // Handlers.Player.OnRemovingHandcuffs(ev)
                     new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnRemovingHandcuffs))),
 
+                    // TODO: Uncomment this part in next major update to prevent breaking changes
                     // if (!ev.IsAllowed)
                     //    return true;
-                    new(OpCodes.Callvirt, PropertyGetter(typeof(RemovingHandcuffsEventArgs), nameof(RemovingHandcuffsEventArgs.IsAllowed))),
-                    new(OpCodes.Brfalse_S, returnLabel),
+                    // new(OpCodes.Callvirt, PropertyGetter(typeof(RemovingHandcuffsEventArgs), nameof(RemovingHandcuffsEventArgs.IsAllowed))),
+                    // new(OpCodes.Brfalse_S, returnLabel),
+
+                    // Invoking RemovedHandcuffs event
+                    // Player.Get(Cuffer)
+                    new CodeInstruction(OpCodes.Ldloc_1),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // Player.Get(Target)
+                    new(OpCodes.Ldloc_0),
+                    new(OpCodes.Call, Method(typeof(Player), nameof(Player.Get), new[] { typeof(ReferenceHub) })),
+
+                    // UncuffReason.CufferDied
+                    new(OpCodes.Ldc_I4_2),
+
+                    // RemovedHandcuffsEventArgs ev = new(Cuffer, Target, UncuffReason.OutOfRange)
+                    new(OpCodes.Newobj, GetDeclaredConstructors(typeof(RemovedHandcuffsEventArgs))[0]),
+
+                    // Handlers.Player.OnRemovedHandcuffs(ev)
+                    new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnRemovedHandcuffs))),
                 });
 
             newInstructions[newInstructions.Count - 2].labels.Add(returnLabel);
