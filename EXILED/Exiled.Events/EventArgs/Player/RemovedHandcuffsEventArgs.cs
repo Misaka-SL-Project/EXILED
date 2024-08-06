@@ -20,8 +20,8 @@ namespace Exiled.Events.EventArgs.Player
         /// Initializes a new instance of the <see cref="RemovedHandcuffsEventArgs" /> class.
         /// </summary>
         /// <param name="cuffer">The cuffer player.</param>
-        /// <param name="target">The target player to be uncuffed.</param>
-        /// <param name="uncuffReason">The reason of removing handcuffs.</param>
+        /// <param name="target">The target player was uncuffed.</param>
+        /// <param name="uncuffReason">The reason for removing the handcuffs.</param>
         public RemovedHandcuffsEventArgs(Player cuffer, Player target, UncuffReason uncuffReason)
         {
             Player = cuffer;
@@ -30,7 +30,7 @@ namespace Exiled.Events.EventArgs.Player
         }
 
         /// <summary>
-        /// Gets the target player to be cuffed.
+        /// Gets the  target player to be cuffed.
         /// </summary>
         public Player Target { get; }
 
@@ -40,7 +40,7 @@ namespace Exiled.Events.EventArgs.Player
         public Player Player { get; }
 
         /// <summary>
-        /// Gets the reason of removing handcuffs.
+        /// Gets the reason for removing handcuffs.
         /// </summary>
         public UncuffReason UncuffReason { get; }
     }
