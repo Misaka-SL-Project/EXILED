@@ -733,6 +733,18 @@ namespace Exiled.API.Features
         }
 
         /// <summary>
+        /// Gets or sets the player's emotion.
+        /// </summary>
+        public EmotionPresetType Emotion
+        {
+            get => EmotionSync.GetEmotionPreset(ReferenceHub);
+            set
+            {
+                EmotionSync.ServerSetEmotionPreset(ReferenceHub, value);
+            }
+        }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the player is muted.
         /// </summary>
         /// <remarks>This property will NOT persistently mute and unmute the player. For persistent mutes, see <see cref="Mute(bool)"/> and <see cref="UnMute(bool)"/>.</remarks>
