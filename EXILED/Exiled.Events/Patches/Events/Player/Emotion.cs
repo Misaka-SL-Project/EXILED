@@ -14,7 +14,7 @@ namespace Exiled.Events.Patches.Events.Player
 
     /// <summary>
     /// Patches <see cref="EmotionSync.ServerSetEmotionPreset"/>.
-    /// Adds the <see cref="Handlers.Player.ChangingEmotion" /> event,
+    /// Adds the <see cref="Handlers.Player.ChangingEmotion" /> event and
     /// <see cref="Handlers.Player.ChangedEmotion" /> event.
     /// </summary>
     [EventPatch(typeof(Handlers.Player), nameof(Handlers.Player.ChangingEmotion))]
