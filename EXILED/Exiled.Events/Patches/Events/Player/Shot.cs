@@ -73,17 +73,18 @@ namespace Exiled.Events.Patches.Events.Player
                 {
                     // this.Hub
                     new(OpCodes.Ldarg_1),
+                    new(OpCodes.Isinst, typeof(HitboxIdentity)),
                     new(OpCodes.Callvirt, PropertyGetter(typeof(HitboxIdentity), nameof(HitboxIdentity.TargetHub))),
 
                     // this.Firearm
                     new(OpCodes.Ldarg_0),
-                    new(OpCodes.Callvirt, PropertyGetter(typeof(SingleBulletHitscan), nameof(SingleBulletHitscan.Firearm))),
+                    new(OpCodes.Callvirt, PropertyGetter(typeof(HitscanHitregModuleBase), nameof(HitscanHitregModuleBase.Firearm))),
 
                     // hit
                     new(OpCodes.Ldarg_2),
 
                     // destructible
-                    new(OpCodes.Ldloc_1),
+                    new(OpCodes.Ldarg_1),
 
                     // damage
                     new(OpCodes.Ldloca_S, 0),
