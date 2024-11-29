@@ -47,6 +47,7 @@ namespace Exiled.API.Features
     using Mirror.LiteNetLib4Mirror;
     using PlayerRoles;
     using PlayerRoles.FirstPersonControl;
+    using PlayerRoles.FirstPersonControl.Thirdperson.Subcontrollers;
     using PlayerRoles.RoleAssign;
     using PlayerRoles.Spectating;
     using PlayerRoles.Voice;
