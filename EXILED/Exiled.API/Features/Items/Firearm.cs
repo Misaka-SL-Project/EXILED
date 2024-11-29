@@ -119,8 +119,20 @@ namespace Exiled.API.Features.Items
         /// <remarks>Disruptor can't be used for MaxAmmo.</remarks>
         public int MaxAmmo
         {
-            get => (Base.Modules[Array.IndexOf(Base.Modules, typeof(MagazineModule))] as MagazineModule).AmmoMax;
-            set => (Base.Modules[Array.IndexOf(Base.Modules, typeof(MagazineModule))] as MagazineModule)._defaultCapacity = value; // Synced?
+            get => Base.Modules.OfType<IAmmoContainerModule>().FirstOrDefault().AmmoMax;
+            set
+            {
+                ModuleBase moduleBase = (ModuleBase)Base.Modules.OfType<IAmmoContainerModule>().FirstOrDefault();
+                switch (moduleBase)
+                {
+                    case CylinderAmmoModule cylinderAmmoModule:
+                        cylinderAmmoModule._defaultCapacity = value - (int)cylinderAmmoModule.Firearm.AttachmentsValue(AttachmentParam.MagazineCapacityModifier);
+                        break;
+                    case MagazineModule magazineModule:
+                        magazineModule._defaultCapacity = value - (int)magazineModule.Firearm.AttachmentsValue(AttachmentParam.MagazineCapacityModifier);
+                        break;
+                }
+            }
         }
 
         /// <summary>
