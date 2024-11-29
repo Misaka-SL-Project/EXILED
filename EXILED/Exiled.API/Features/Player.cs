@@ -739,10 +739,7 @@ namespace Exiled.API.Features
         public EmotionPresetType Emotion
         {
             get => EmotionSync.GetEmotionPreset(ReferenceHub);
-            set
-            {
-                EmotionSync.ServerSetEmotionPreset(ReferenceHub, value);
-            }
+            set => EmotionSync.ServerSetEmotionPreset(ReferenceHub, value);
         }
 
         /// <summary>
