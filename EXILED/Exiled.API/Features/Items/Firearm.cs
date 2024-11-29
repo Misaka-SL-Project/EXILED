@@ -109,8 +109,8 @@ namespace Exiled.API.Features.Items
         /// </summary>
         public int Ammo
         {
-            get => (Base.Modules[Array.IndexOf(Base.Modules, typeof(IPrimaryAmmoContainerModule))] as IPrimaryAmmoContainerModule).AmmoStored;
-            set => (Base.Modules[Array.IndexOf(Base.Modules, typeof(IPrimaryAmmoContainerModule))] as IPrimaryAmmoContainerModule).ServerModifyAmmo(value);
+            get => Base.Modules.OfType<IPrimaryAmmoContainerModule>().FirstOrDefault().AmmoStored;
+            set => Base.Modules.OfType<IPrimaryAmmoContainerModule>().FirstOrDefault().ServerModifyAmmo(value);
         }
 
         /// <summary>
