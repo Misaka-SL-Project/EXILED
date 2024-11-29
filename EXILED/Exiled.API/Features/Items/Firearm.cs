@@ -109,8 +109,8 @@ namespace Exiled.API.Features.Items
         /// </summary>
         public int Ammo
         {
-            get => (Base.Modules[Array.IndexOf(Base.Modules, typeof(MagazineModule))] as MagazineModule).AmmoStored;
-            set => (Base.Modules[Array.IndexOf(Base.Modules, typeof(MagazineModule))] as MagazineModule).AmmoStored = value;
+            get => (Base.Modules[Array.IndexOf(Base.Modules, typeof(IPrimaryAmmoContainerModule))] as IPrimaryAmmoContainerModule).AmmoStored;
+            set => (Base.Modules[Array.IndexOf(Base.Modules, typeof(IPrimaryAmmoContainerModule))] as IPrimaryAmmoContainerModule).ServerModifyAmmo(value);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace Exiled.API.Features.Items
         /// <summary>
         /// Gets the <see cref="Enums.AmmoType"/> of the firearm.
         /// </summary>
-        public AmmoType AmmoType => (Base.Modules.OfType<MagazineModule>().FirstOrDefault()?.AmmoType ?? ItemType.None).GetAmmoType();
+        public AmmoType AmmoType => (Base.Modules.OfType<IPrimaryAmmoContainerModule>().FirstOrDefault()?.AmmoType ?? ItemType.None).GetAmmoType();
 
         /// <summary>
         /// Gets a value indicating whether the firearm is being aimed.
