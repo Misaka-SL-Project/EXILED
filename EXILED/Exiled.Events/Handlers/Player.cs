@@ -8,6 +8,7 @@
 namespace Exiled.Events.Handlers
 {
     using System;
+
     using Exiled.Events.EventArgs.Item;
 
 #pragma warning disable IDE0079
