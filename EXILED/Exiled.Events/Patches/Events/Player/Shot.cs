@@ -71,7 +71,7 @@ namespace Exiled.Events.Patches.Events.Player
                 index,
                 new CodeInstruction[]
                 {
-                    // this.Hub
+                    // (IDestructible as HitboxIdentity).TargetHub
                     new(OpCodes.Ldarg_1),
                     new(OpCodes.Isinst, typeof(HitboxIdentity)),
                     new(OpCodes.Callvirt, PropertyGetter(typeof(HitboxIdentity), nameof(HitboxIdentity.TargetHub))),
@@ -80,7 +80,7 @@ namespace Exiled.Events.Patches.Events.Player
                     new(OpCodes.Ldarg_0),
                     new(OpCodes.Callvirt, PropertyGetter(typeof(HitscanHitregModuleBase), nameof(HitscanHitregModuleBase.Firearm))),
 
-                    // hit
+                    // RaycastHit
                     new(OpCodes.Ldarg_2),
 
                     // destructible
