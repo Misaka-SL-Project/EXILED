@@ -45,7 +45,6 @@ namespace Exiled.Events.Patches.Events.Player
 
             Label returnLabel = generator.DefineLabel();
             Label continueLabel = generator.DefineLabel();
-            Label continueLabel2 = generator.DefineLabel();
             Label jmp = generator.DefineLabel();
 
             LocalBuilder changingRoleEventArgs = generator.DeclareLocal(typeof(ChangingRoleEventArgs));
@@ -143,17 +142,10 @@ namespace Exiled.Events.Patches.Events.Player
             offset = 1;
             index = newInstructions.FindIndex(i => i.Calls(Method(typeof(PlayerRoleManager.RoleChanged), nameof(PlayerRoleManager.RoleChanged.Invoke)))) + offset;
 
-            newInstructions[index].labels.Add(continueLabel2);
-
             newInstructions.InsertRange(
                 index,
                 new CodeInstruction[]
                 {
-                    // if (changingRoleEventArgs == null)
-                    // skip
-                    new(OpCodes.Ldloc_S, changingRoleEventArgs.LocalIndex),
-                    new(OpCodes.Brfalse_S, continueLabel2),
-
                     // changingRoleEventArgs
                     new(OpCodes.Ldloc_S, changingRoleEventArgs.LocalIndex),
 
@@ -194,7 +186,7 @@ namespace Exiled.Events.Patches.Events.Player
         {
             try
             {
-                if (!NetworkServer.active || !ev.SpawnFlags.HasFlag(RoleSpawnFlags.AssignInventory))
+                if (!NetworkServer.active || ev == null || !ev.SpawnFlags.HasFlag(RoleSpawnFlags.AssignInventory))
                 {
                     return;
                 }
