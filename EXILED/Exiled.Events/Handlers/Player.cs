@@ -562,7 +562,7 @@ namespace Exiled.Events.Handlers
         /// <summary>
         /// Called before a player's emotion changed.
         /// </summary>
-        /// <param name="ev">The <see cref="ChangingAmmoEventArgs"/> instance.</param>
+        /// <param name="ev">The <see cref="ChangingEmotionEventArgs"/> instance.</param>
         public static void OnChangingEmotion(ChangingEmotionEventArgs ev) => ChangingEmotion.InvokeSafely(ev);
 
         /// <summary>
