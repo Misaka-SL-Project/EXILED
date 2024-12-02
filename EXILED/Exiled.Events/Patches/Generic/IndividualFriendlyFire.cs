@@ -161,46 +161,6 @@ namespace Exiled.Events.Patches.Generic
     }
 
     /// <summary>
-    /// Patches <see cref="HitboxIdentity.IsDamageable(ReferenceHub, ReferenceHub)"/>.
-    /// </summary>
-    [HarmonyPatch(typeof(HitboxIdentity), nameof(HitboxIdentity.IsDamageable), typeof(ReferenceHub), typeof(ReferenceHub))]
-    internal static class HitboxIdentityCheckFriendlyFire
-    {
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            List<CodeInstruction> newInstructions = ListPool<CodeInstruction>.Pool.Get(instructions);
-
-            Label jmp = generator.DefineLabel();
-
-            // CheckFriendlyFirePlayer(this.PreviousOwner.Hub, referenceHub)
-            newInstructions.InsertRange(
-                0,
-                new CodeInstruction[]
-                {
-                    // CheckFriendlyFirePlayerHitbox(attacker, victim);
-                    new(OpCodes.Ldarg_0),
-                    new(OpCodes.Ldarg_1),
-                    new(OpCodes.Call, Method(typeof(IndividualFriendlyFire), nameof(IndividualFriendlyFire.CheckFriendlyFirePlayerHitbox), new Type[] { typeof(ReferenceHub), typeof(ReferenceHub) })),
-
-                    // goto base game logic if false
-                    new(OpCodes.Brfalse_S, jmp),
-
-                    // Return true
-                    new(OpCodes.Ldc_I4_1),
-                    new(OpCodes.Ret),
-
-                    // jmp
-                    new CodeInstruction(OpCodes.Nop).WithLabels(jmp),
-                });
-
-            for (int z = 0; z < newInstructions.Count; z++)
-                yield return newInstructions[z];
-
-            ListPool<CodeInstruction>.Pool.Return(newInstructions);
-        }
-    }
-
-    /// <summary>
     /// Patches <see cref="AttackerDamageHandler.ProcessDamage(ReferenceHub)"/> to allow or disallow friendly fire.
     /// </summary>
     [HarmonyPatch(typeof(AttackerDamageHandler), nameof(AttackerDamageHandler.ProcessDamage))]
