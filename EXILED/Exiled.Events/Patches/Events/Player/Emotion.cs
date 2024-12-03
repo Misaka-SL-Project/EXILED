@@ -7,10 +7,16 @@
 
 namespace Exiled.Events.Patches.Events.Player
 {
+    using System.Collections.Generic;
+    using System.Reflection.Emit;
+
+    using Exiled.API.Features.Pools;
     using Exiled.Events.Attributes;
     using Exiled.Events.EventArgs.Player;
     using HarmonyLib;
     using PlayerRoles.FirstPersonControl.Thirdperson.Subcontrollers;
+
+    using static HarmonyLib.AccessTools;
 
     /// <summary>
     /// Patches <see cref="EmotionSync.ServerSetEmotionPreset"/>.
@@ -22,17 +28,52 @@ namespace Exiled.Events.Patches.Events.Player
     [HarmonyPatch(typeof(EmotionSync), nameof(EmotionSync.ServerSetEmotionPreset))]
     internal static class Emotion
     {
-        private static bool Prefix(this ReferenceHub hub, EmotionPresetType preset)
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
-            ChangingEmotionEventArgs ev = new(hub, preset, EmotionSync.GetEmotionPreset(hub));
-            Handlers.Player.OnChangingEmotion(ev);
-            return ev.IsAllowed;
-        }
+            List<CodeInstruction> newInstructions = ListPool<CodeInstruction>.Pool.Get(instructions);
 
-        private static void Postfix(this ReferenceHub hub, EmotionPresetType preset)
-        {
-            ChangedEmotionEventArgs ev = new(hub, EmotionSync.GetEmotionPreset(hub));
-            Handlers.Player.OnChangedEmotion(ev);
+            Label ret = generator.DefineLabel();
+
+            int index = newInstructions.FindIndex(x => x.opcode == OpCodes.Ldsfld);
+
+            newInstructions.InsertRange(index, new CodeInstruction[]
+            {
+                // ChangingEmotionEventArgs ev = new(hub, preset, EmotionSync.GetEmotionPreset(hub));
+                new CodeInstruction(OpCodes.Ldarg_0).MoveLabelsFrom(newInstructions[index]),
+                new(OpCodes.Ldarg_1),
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Call, Method(typeof(EmotionSync), nameof(EmotionSync.GetEmotionPreset))),
+                new(OpCodes.Ldc_I4_1),
+                new(OpCodes.Newobj, GetDeclaredConstructors(typeof(ChangingEmotionEventArgs))[0]),
+                new(OpCodes.Dup),
+
+                // Handlers.Player.OnChangingEmotion(ev);
+                new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnChangingEmotion))),
+
+                // if (!ev.IsAllowed)
+                //    return;
+                new(OpCodes.Callvirt, PropertyGetter(typeof(ChangingEmotionEventArgs), nameof(ChangingEmotionEventArgs.IsAllowed))),
+                new(OpCodes.Brfalse, ret),
+            });
+
+            newInstructions.InsertRange(newInstructions.Count - 1, new CodeInstruction[]
+            {
+                // ChangedEmotionEventArgs ev = new(hub, EmotionSync.GetEmotionPreset(hub));
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new(OpCodes.Ldarg_0),
+                new(OpCodes.Call, Method(typeof(EmotionSync), nameof(EmotionSync.GetEmotionPreset))),
+                new(OpCodes.Newobj, GetDeclaredConstructors(typeof(ChangedEmotionEventArgs))[0]),
+
+                // Handlers.Player.OnChangedEmotion(ev);
+                new(OpCodes.Call, Method(typeof(Handlers.Player), nameof(Handlers.Player.OnChangedEmotion))),
+            });
+
+            newInstructions[newInstructions.Count - 1].labels.Add(ret);
+
+            for (int z = 0; z < newInstructions.Count; z++)
+                yield return newInstructions[z];
+
+            ListPool<CodeInstruction>.Pool.Return(newInstructions);
         }
     }
 }
